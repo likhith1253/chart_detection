@@ -541,10 +541,9 @@ class CNNChartClassifier:
             "best_val_macro_f1": best_score,
             "best_epoch": best_epoch,
         })
+        self.history = history
         self._write_outputs(df, train_df, val_df, test_df, classes, history, test_metrics, inference_time)
-        pd.DataFrame(epoch_rows).to_csv(self.output_dir / "epoch_metrics.csv", index=False)
-        pd.DataFrame(epoch_rows).to_csv(self.output_dir / "training_metrics.csv", index=False)
-        pd.DataFrame(system_rows).to_csv(self.output_dir / "system_metrics.csv", index=False)
+        self._write_training_csvs(history, epoch_rows, system_rows)
         self._log_system_metrics(system_rows)
         result = {
             "backbone": "efficientnet_b0",
@@ -605,6 +604,15 @@ class CNNChartClassifier:
         self._save_error_analysis(test_df, metrics)
         self._comparison_table(metrics)
         self._save_featureless_figures(full_df, train_df, val_df, test_df, metrics)
+
+    def _write_training_csvs(self, history: List[Dict], epoch_rows: List[Dict], system_rows: List[Dict]) -> None:
+        history_df = pd.DataFrame(history)
+        epoch_df = pd.DataFrame(epoch_rows)
+        system_df = pd.DataFrame(system_rows)
+        history_df.to_csv(self.output_dir / "training_history.csv", index=False)
+        epoch_df.to_csv(self.output_dir / "epoch_metrics.csv", index=False)
+        epoch_df.to_csv(self.output_dir / "training_metrics.csv", index=False)
+        system_df.to_csv(self.output_dir / "system_metrics.csv", index=False)
 
     def _save_curves(self, hist: pd.DataFrame):
         if hist.empty:
