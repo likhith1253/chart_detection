@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from pathlib import PureWindowsPath
 from time import perf_counter
 from typing import Iterable
 
@@ -83,6 +84,13 @@ def build_image_index(image_root: str | Path) -> dict[str, Path]:
     return image_index
 
 
+def _image_name_only(raw_value: str) -> str:
+    value = str(raw_value).strip()
+    if "\\" in value:
+        return PureWindowsPath(value).name
+    return Path(value).name
+
+
 def resolve_split_dataframe(
     split_df: pd.DataFrame,
     metadata_root: str | Path,
@@ -100,7 +108,7 @@ def resolve_split_dataframe(
     missing_paths: list[str] = []
 
     for raw_value in df["image_path"].astype(str).tolist():
-        image_name = Path(str(raw_value).strip()).name
+        image_name = _image_name_only(raw_value)
         resolved = image_index.get(image_name)
         if resolved is None:
             missing_paths.append(image_name)
