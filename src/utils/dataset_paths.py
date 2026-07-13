@@ -68,7 +68,7 @@ def build_image_index(image_root: str | Path) -> dict[str, Path]:
     for path in root.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in _IMAGE_EXTENSIONS:
             continue
-        key = path.name
+        key = path.name.casefold()
         if key in image_index:
             duplicates.setdefault(key, [image_index[key]]).append(path)
             continue
@@ -108,7 +108,7 @@ def resolve_split_dataframe(
     missing_paths: list[str] = []
 
     for raw_value in df["image_path"].astype(str).tolist():
-        image_name = _image_name_only(raw_value)
+        image_name = _image_name_only(raw_value).casefold()
         resolved = image_index.get(image_name)
         if resolved is None:
             missing_paths.append(image_name)
