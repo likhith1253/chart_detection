@@ -167,36 +167,57 @@ def resolve_split_dataframe(
     start = perf_counter()
     image_index = build_image_resolution_index(roots.metadata_root, roots.image_root)
     resolved_paths: list[str] = []
-    missing_paths: list[str] = []
     raw_resolved = 0
     original_resolved = 0
+    missing_rows = 0
 
-    for raw_value in df["image_path"].astype(str).tolist():
-        image_name = _image_name_only(raw_value).casefold()
-        resolved = image_index.raw_images.get(image_name)
-        if resolved is not None:
-            raw_resolved += 1
-            resolved_paths.append(str(resolved))
-            continue
-        resolved = image_index.original_datasets.get(image_name)
+    for _, row in df.iterrows():
+        candidates: list[str] = []
+        if "image_name" in df.columns:
+            image_name_value = row.get("image_name")
+            if pd.notna(image_name_value):
+                candidates.append(str(image_name_value).strip())
+        image_path_value = row.get("image_path")
+        if pd.notna(image_path_value):
+            candidates.append(_image_name_only(image_path_value))
+
+        resolved = None
+        for candidate in candidates:
+            image_name = candidate.casefold()
+            resolved = image_index.raw_images.get(image_name)
+            if resolved is not None:
+                raw_resolved += 1
+                break
+            resolved = image_index.original_datasets.get(image_name)
+            if resolved is not None:
+                original_resolved += 1
+                break
+
         if resolved is None:
-            missing_paths.append(image_name)
-            resolved_paths.append(raw_value)
-            continue
-        original_resolved += 1
-        resolved_paths.append(str(resolved))
+            missing_rows += 1
+            resolved_paths.append(str(image_path_value))
+        else:
+            resolved_paths.append(str(resolved))
 
     resolution_time_sec = perf_counter() - start
 
-    if missing_paths:
-        sample = ", ".join(missing_paths[:5])
-        raise FileNotFoundError(f"Could not resolve {len(missing_paths)} image paths. Sample: {sample}")
+    total_rows = int(len(df))
+    assert raw_resolved + original_resolved + missing_rows == total_rows
+
+    if missing_rows:
+        raise FileNotFoundError(f"Could not resolve {missing_rows} image rows.")
 
     df["image_path"] = resolved_paths
+    print(f"Rows processed: {total_rows}")
+    print(f"Resolved from raw_images: {raw_resolved}")
+    print(f"Resolved from original_datasets: {original_resolved}")
+    print(f"Missing rows: {missing_rows}")
+    print("PASS")
+
     stats = ImageResolutionStats(
         indexed_images=image_index.indexed_images,
         resolution_time_sec=resolution_time_sec,
-        missing_images=len(missing_paths),
+        missing_images=missing_rows,
         resolved_from_raw_images=raw_resolved,
         resolved_from_original_datasets=original_resolved,
     )
