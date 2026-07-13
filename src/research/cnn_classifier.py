@@ -750,8 +750,7 @@ class CNNChartClassifier:
         ax.imshow(cm, cmap="Blues")
         ax.axis("off")
         fig.canvas.draw()
-        arr = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-        arr = arr.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+        arr = np.asarray(fig.canvas.buffer_rgba())[:, :, :3]
         plt.close(fig)
         return arr
 
