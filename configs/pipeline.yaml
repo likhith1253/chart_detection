@@ -1,0 +1,80 @@
+seed: 42
+batch_size: 64
+run_ablation: true
+
+ocr:
+  enabled_engines:
+    - paddleocr
+    - easyocr
+  ensemble_enabled: true
+  paddle_retry_count: 1
+  disable_mkldnn_on_retry: true
+  force_engine: null
+
+preprocessing:
+  enabled: true
+  grayscale: true
+  clahe: true
+  adaptive_threshold: true
+  denoise: true
+  morphology_cleanup: true
+  deskew: true
+
+cache:
+  enabled: true
+  root_dir: cache
+  ocr_subdir: ocr
+  invalidate: false
+
+parallel:
+  enabled: true
+  worker_count: 0
+  max_worker_cap: 32
+  executor_type: thread
+
+dataset:
+  raw_images_dir: data/raw_images
+  datasets_dir: data/datasets
+  manifest_path: data/dataset_manifest.json
+  metadata_csv: data/datasets/dataset_metadata.csv
+  verified_labels_csv: data/datasets/verified_labels.csv
+  min_size: 6500
+  split_seed: 42
+  split_ratio:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+  max_images: 0
+
+outputs:
+  results_dir: results
+  logs_dir: results/logs
+  plots_dir: results/plots
+  pipeline_output: results/pipeline_output.json
+  experiment_csv: results/experiment_results.csv
+  research_metrics: results/research_metrics.json
+  runtime_profile: results/runtime_profile.json
+  experiment_config: results/experiment_config.json
+  research_report: results/research_report.md
+  ablation_csv: results/ablation_comparison.csv
+
+logging:
+  level: INFO
+  structured_json: true
+  file_name: pipeline.log
+
+ablation:
+  enabled: true
+  variants:
+    - name: easyocr_only
+      ocr_force_engine: easyocr
+      preprocessing_enabled: true
+    - name: paddleocr_only
+      ocr_force_engine: paddleocr
+      preprocessing_enabled: true
+    - name: ocr_ensemble
+      ocr_force_engine: null
+      preprocessing_enabled: true
+    - name: ensemble_no_preprocessing
+      ocr_force_engine: null
+      preprocessing_enabled: false

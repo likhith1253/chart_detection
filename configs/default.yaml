@@ -1,0 +1,66 @@
+seed: 42
+project_root: .
+
+dataset:
+  output_dir: data/raw_images
+  metadata_dir: data/datasets
+  labels_csv: data/datasets/labels.csv
+  fingerprint_path: data/datasets/dataset_fingerprint.json
+  total_images: 2500
+  images_per_type: 500
+  chart_types:
+    - bar
+    - histogram
+    - line
+    - scatter
+    - pie
+  filename_prefix: synthetic
+  overwrite: true
+
+synthetic:
+  font_families:
+    - DejaVu Sans
+    - DejaVu Serif
+    - DejaVu Sans Mono
+  font_sizes: [10, 11, 12, 13, 14]
+  fig_sizes:
+    - [8.0, 5.0]
+    - [10.0, 6.0]
+    - [9.0, 5.0]
+    - [10.0, 7.0]
+    - [12.0, 6.0]
+  dpi_options: [100, 150]
+  palette_names:
+    - Paired
+    - Set2
+    - Set3
+    - tab10
+    - Pastel1
+    - Dark2
+    - Accent
+    - tab20
+  scatter_colormaps:
+    - viridis
+    - plasma
+    - coolwarm
+    - RdYlBu
+  background_colors:
+    - white
+    - "#f5f5f5"
+    - "#eef2f7"
+    - "#fff8e7"
+    - "#f0fff0"
+  noise_levels: [0.0, 0.01, 0.02, 0.05]
+  orientations:
+    - vertical
+    - horizontal
+  histogram_distributions:
+    - normal
+    - uniform
+    - exponential
+    - lognormal
+
+logging:
+  level: INFO
+  format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+  file_name: null
