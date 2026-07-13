@@ -24,6 +24,18 @@ class ImageResolutionStats:
     indexed_images: int
     resolution_time_sec: float
     missing_images: int
+    resolved_from_raw_images: int
+    resolved_from_original_datasets: int
+
+
+_KNOWN_ORIGINAL_DATASET_DIRS = (
+    ("plotqa", Path("plotqa") / "PlotQA-master" / "images"),
+    ("figureqa", Path("figureqa")),
+    ("novachart", Path("novachart")),
+    ("chartqa", Path("chartqa")),
+    ("dvqa", Path("dvqa")),
+    ("synthetic", Path("synthetic")),
+)
 
 
 def resolve_dataset_roots(
@@ -84,6 +96,56 @@ def build_image_index(image_root: str | Path) -> dict[str, Path]:
     return image_index
 
 
+def build_original_dataset_index(metadata_root: str | Path) -> dict[str, Path]:
+    root = Path(metadata_root)
+    if not root.exists():
+        return {}
+
+    image_index: dict[str, Path] = {}
+    duplicates: dict[str, list[Path]] = {}
+    for _, relative_dir in _KNOWN_ORIGINAL_DATASET_DIRS:
+        dataset_root = root / relative_dir
+        if not dataset_root.exists():
+            continue
+        for path in dataset_root.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in _IMAGE_EXTENSIONS:
+                continue
+            key = path.name.casefold()
+            if key in image_index:
+                duplicates.setdefault(key, [image_index[key]]).append(path)
+                continue
+            image_index[key] = path
+
+    if duplicates:
+        details = "; ".join(
+            f"{name}: {', '.join(str(p) for p in paths[:3])}"
+            for name, paths in sorted(duplicates.items())
+        )
+        raise ValueError(f"Duplicate image filenames detected under known dataset roots in {root}: {details}")
+
+    return image_index
+
+
+@dataclass(frozen=True)
+class ImageResolutionIndex:
+    raw_images: dict[str, Path]
+    original_datasets: dict[str, Path]
+
+    @property
+    def indexed_images(self) -> int:
+        return len(self.raw_images) + len(self.original_datasets)
+
+
+def build_image_resolution_index(
+    metadata_root: str | Path,
+    image_root: str | Path,
+) -> ImageResolutionIndex:
+    return ImageResolutionIndex(
+        raw_images=build_image_index(image_root),
+        original_datasets=build_original_dataset_index(metadata_root),
+    )
+
+
 def _image_name_only(raw_value: str) -> str:
     value = str(raw_value).strip()
     if "\\" in value:
@@ -103,17 +165,25 @@ def resolve_split_dataframe(
         raise ValueError("Split CSV must contain an image_path column")
 
     start = perf_counter()
-    image_index = build_image_index(roots.image_root)
+    image_index = build_image_resolution_index(roots.metadata_root, roots.image_root)
     resolved_paths: list[str] = []
     missing_paths: list[str] = []
+    raw_resolved = 0
+    original_resolved = 0
 
     for raw_value in df["image_path"].astype(str).tolist():
         image_name = _image_name_only(raw_value).casefold()
-        resolved = image_index.get(image_name)
+        resolved = image_index.raw_images.get(image_name)
+        if resolved is not None:
+            raw_resolved += 1
+            resolved_paths.append(str(resolved))
+            continue
+        resolved = image_index.original_datasets.get(image_name)
         if resolved is None:
             missing_paths.append(image_name)
             resolved_paths.append(raw_value)
             continue
+        original_resolved += 1
         resolved_paths.append(str(resolved))
 
     resolution_time_sec = perf_counter() - start
@@ -124,9 +194,11 @@ def resolve_split_dataframe(
 
     df["image_path"] = resolved_paths
     stats = ImageResolutionStats(
-        indexed_images=len(image_index),
+        indexed_images=image_index.indexed_images,
         resolution_time_sec=resolution_time_sec,
         missing_images=len(missing_paths),
+        resolved_from_raw_images=raw_resolved,
+        resolved_from_original_datasets=original_resolved,
     )
     if return_stats:
         return df, stats
