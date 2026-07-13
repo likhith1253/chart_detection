@@ -170,8 +170,9 @@ class CNNChartClassifier:
         split_csv: str | Path,
         metadata_root: str | Path | None = None,
         image_root: str | Path | None = None,
+        split_df: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        df = pd.read_csv(split_csv)
+        df = split_df.copy() if split_df is not None else pd.read_csv(split_csv)
         df = df[df["label"].isin(CHART_LABELS)].copy()
         df = resolve_split_dataframe(
             df,
@@ -315,6 +316,7 @@ class CNNChartClassifier:
         config_in: Optional[TrainConfig] = None,
         metadata_root: str | Path | None = None,
         image_root: str | Path | None = None,
+        split_df: pd.DataFrame | None = None,
     ) -> Dict:
         self.config = config_in or self.config
         self._seed_all(self.config.seed)
@@ -324,6 +326,7 @@ class CNNChartClassifier:
                 split_csv,
                 metadata_root=metadata_root,
                 image_root=image_root,
+                split_df=split_df,
             )
         )
         self._validate_inputs(df)

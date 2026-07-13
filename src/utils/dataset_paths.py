@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from time import perf_counter
 from typing import Iterable
 
 import pandas as pd
@@ -15,6 +16,13 @@ _IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 class DatasetRoots:
     metadata_root: Path
     image_root: Path
+
+
+@dataclass(frozen=True)
+class ImageResolutionStats:
+    indexed_images: int
+    resolution_time_sec: float
+    missing_images: int
 
 
 def resolve_dataset_roots(
@@ -49,47 +57,71 @@ def count_images(image_root: str | Path) -> int:
     )
 
 
-def _candidate_image_paths(raw_value: str, image_root: Path) -> Iterable[Path]:
-    raw_path = Path(str(raw_value).strip())
-    if raw_path.is_absolute():
-        yield raw_path
-        return
+def build_image_index(image_root: str | Path) -> dict[str, Path]:
+    root = Path(image_root)
+    if not root.exists():
+        return {}
 
-    yield raw_path
-    yield image_root / raw_path
-    yield image_root / raw_path.name
+    image_index: dict[str, Path] = {}
+    duplicates: dict[str, list[Path]] = {}
+    for path in root.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in _IMAGE_EXTENSIONS:
+            continue
+        key = path.name
+        if key in image_index:
+            duplicates.setdefault(key, [image_index[key]]).append(path)
+            continue
+        image_index[key] = path
+
+    if duplicates:
+        details = "; ".join(
+            f"{name}: {', '.join(str(p) for p in paths[:3])}"
+            for name, paths in sorted(duplicates.items())
+        )
+        raise ValueError(f"Duplicate image filenames detected under {root}: {details}")
+
+    return image_index
 
 
 def resolve_split_dataframe(
     split_df: pd.DataFrame,
     metadata_root: str | Path,
     image_root: str | Path,
-) -> pd.DataFrame:
+    return_stats: bool = False,
+) -> pd.DataFrame | tuple[pd.DataFrame, ImageResolutionStats]:
     roots = resolve_dataset_roots(metadata_root=metadata_root, image_root=image_root)
     df = split_df.copy()
     if "image_path" not in df.columns:
         raise ValueError("Split CSV must contain an image_path column")
 
+    start = perf_counter()
+    image_index = build_image_index(roots.image_root)
     resolved_paths: list[str] = []
     missing_paths: list[str] = []
 
     for raw_value in df["image_path"].astype(str).tolist():
-        resolved = None
-        for candidate in _candidate_image_paths(raw_value, roots.image_root):
-            if candidate.exists():
-                resolved = candidate
-                break
+        image_name = Path(str(raw_value).strip()).name
+        resolved = image_index.get(image_name)
         if resolved is None:
-            missing_paths.append(raw_value)
+            missing_paths.append(image_name)
             resolved_paths.append(raw_value)
-        else:
-            resolved_paths.append(str(resolved))
+            continue
+        resolved_paths.append(str(resolved))
+
+    resolution_time_sec = perf_counter() - start
 
     if missing_paths:
         sample = ", ".join(missing_paths[:5])
         raise FileNotFoundError(f"Could not resolve {len(missing_paths)} image paths. Sample: {sample}")
 
     df["image_path"] = resolved_paths
+    stats = ImageResolutionStats(
+        indexed_images=len(image_index),
+        resolution_time_sec=resolution_time_sec,
+        missing_images=len(missing_paths),
+    )
+    if return_stats:
+        return df, stats
     return df
 
 
