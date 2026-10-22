@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pytest
 
 from src.pipeline.config import OCRConfig, PreprocessingConfig
 from src.pipeline.milestone2 import Milestone2Pipeline
@@ -53,6 +54,10 @@ def test_segmentation_and_features(tmp_path):
     assert all(np.isfinite(v) for v in fv.feature_values)
 
 
+@pytest.mark.skipif(
+    not Path("data/datasets/plotqa/PlotQA-master/images/3_vbar_categorical.png").exists(),
+    reason="needs the local (git-ignored) PlotQA sample image",
+)
 def test_real_sample_image():
     pipe = Milestone2Pipeline(ocr_config=OCRConfig(enabled_engines=[]))
     sample = Path("data/datasets/plotqa/PlotQA-master/images/3_vbar_categorical.png")
