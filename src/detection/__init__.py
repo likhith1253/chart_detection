@@ -1,3 +1,90 @@
-"""Detection package."""
+from .config import DetectionConfig, YoloBackendConfig, load_detection_config
+from .dataset import DetectionDataset, DetectionSample, load_detection_dataset
+from .evaluate import DetectionEvaluator, DetectionMetrics
+from .adapters import (
+    AnnotationParser,
+    AdapterRegistry,
+    BoundingBox as AdapterBoundingBox,
+    DatasetAdapter,
+    DatasetConverter,
+    DatasetRecord,
+    DatasetValidator,
+    DetectionAnnotation,
+    DetectionDatasetManifest,
+    ValidationReport,
+    get_adapter_registry,
+    parse_annotation_file,
+)
+from .model import (
+    AbstractDetector,
+    DetectionPrediction,
+    DetectionResult,
+    DetectorBackendError,
+    YoloDetector,
+    create_detector,
+)
+from .predict import DetectionPredictor, predict_chart_regions
+from .train import DetectionTrainer, TrainingConfig, TrainingState
+from .training import (
+    BenchmarkDetectionDatasetBuilder,
+    DetectorTrainingConfig,
+    DetectorTrainingState,
+    DetectionDataset as TrainingDetectionDataset,
+    TrainingHistoryRow,
+    YoloTrainingBridge,
+    seed_everything,
+)
+from .manifest import (
+    ManifestStatistics,
+    ManifestValidationReport,
+    build_manifest,
+    build_manifest_statistics,
+    load_manifest,
+    validate_manifest,
+)
 
-from .yolo_detector import ChartDetectionService
+__all__ = [
+    "AbstractDetector",
+    "AdapterBoundingBox",
+    "AdapterRegistry",
+    "AnnotationParser",
+    "DatasetAdapter",
+    "DatasetConverter",
+    "DatasetRecord",
+    "DetectionConfig",
+    "DetectionDataset",
+    "DetectionAnnotation",
+    "DetectionDatasetManifest",
+    "DetectionPredictor",
+    "DetectionPrediction",
+    "DetectionResult",
+    "DetectionSample",
+    "DetectionTrainer",
+    "DatasetValidator",
+    "DetectionMetrics",
+    "DetectorBackendError",
+    "ManifestStatistics",
+    "ManifestValidationReport",
+    "build_manifest",
+    "build_manifest_statistics",
+    "ValidationReport",
+    "TrainingConfig",
+    "TrainingState",
+    "BenchmarkDetectionDatasetBuilder",
+    "DetectorTrainingConfig",
+    "DetectorTrainingState",
+    "TrainingDetectionDataset",
+    "TrainingHistoryRow",
+    "YoloTrainingBridge",
+    "YoloBackendConfig",
+    "YoloDetector",
+    "seed_everything",
+    "create_detector",
+    "load_manifest",
+    "get_adapter_registry",
+    "load_detection_config",
+    "load_detection_dataset",
+    "validate_manifest",
+    "predict_chart_regions",
+    "parse_annotation_file",
+]
