@@ -131,25 +131,34 @@ def target_counts_per_ml(cfg: SimConfig) -> tuple[float, float, float]:
     return n4, n6, n14
 
 
-def sample_particle_sizes(
-    rng: np.random.Generator, n: int, counts: tuple[float, float, float], size_max: float
-) -> np.ndarray:
-    """Inverse-CDF sampling of the piecewise power-law cumulative distribution
-    N(>d) that passes through the three ISO channel counts.
-
-    Above 14 um the slope of the 6 -> 14 um segment is extended up to size_max.
-    """
+def size_distribution_nodes(
+    counts: tuple[float, float, float], size_min: float, size_max: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Nodes (d, N(>d)) of the piecewise power-law cumulative distribution through
+    the three ISO channel counts. Below 4 um the 4 -> 6 um slope is extended down to
+    size_min; above 14 um the 6 -> 14 um slope is extended up to size_max."""
     n4, n6, n14 = (max(c, 1e-9) for c in counts)
-    d = np.array([CHANNELS_UM[0], CHANNELS_UM[1], CHANNELS_UM[2], size_max])
-    slope = math.log(n14 / n6) / math.log(14 / 6)
-    n_max = n14 * (size_max / 14) ** slope
-    logn = np.log(np.array([n4, n6, n14, n_max]))
-    logd = np.log(d)
-    # fraction of particles larger than d
-    frac = np.exp(logn - logn[0])
+    lo_slope = math.log(n6 / n4) / math.log(6 / 4)
+    hi_slope = math.log(n14 / n6) / math.log(14 / 6)
+    d = [CHANNELS_UM[0], CHANNELS_UM[1], CHANNELS_UM[2], size_max]
+    n = [n4, n6, n14, n14 * (size_max / 14) ** hi_slope]
+    if size_min < CHANNELS_UM[0]:
+        d.insert(0, size_min)
+        n.insert(0, n4 * (size_min / 4) ** lo_slope)
+    return np.array(d), np.array(n)
+
+
+def sample_particle_sizes(
+    rng: np.random.Generator, n: int, counts: tuple[float, float, float],
+    size_max: float, size_min: float = 4.0,
+) -> np.ndarray:
+    """Inverse-CDF sampling of ``n`` sizes in [size_min, size_max] from the
+    piecewise power-law cumulative distribution (see size_distribution_nodes)."""
+    d, cum = size_distribution_nodes(counts, size_min, size_max)
+    frac = cum / cum[0]  # fraction of particles larger than d
     u = rng.uniform(frac[-1], 1.0, n)  # exclude particles above size_max
     # log F(d) decreases monotonically with d, so invert it by interpolation
-    return np.exp(np.interp(np.log(u), np.log(frac)[::-1], logd[::-1]))
+    return np.exp(np.interp(np.log(u), np.log(frac)[::-1], np.log(d)[::-1]))
 
 
 def build_scene(cfg: SimConfig, rng: np.random.Generator) -> Scene:
@@ -171,8 +180,16 @@ def build_scene(cfg: SimConfig, rng: np.random.Generator) -> Scene:
 
     fov_volume_ml = (fw * 1e-4) * (fh * 1e-4) * (h * 1e-4)
     counts = target_counts_per_ml(cfg)
-    n_particles = int(rng.poisson(counts[0] * fov_volume_ml)) if counts[0] > 0 else 0
-    sizes = sample_particle_sizes(rng, n_particles, counts, pop.particle_size_max_um) if n_particles else []
+    size_min = pop.particle_size_min_um
+    if counts[0] > 0:
+        _, cum = size_distribution_nodes(counts, size_min, pop.particle_size_max_um)
+        n_particles = int(rng.poisson(cum[0] * fov_volume_ml))
+    else:
+        n_particles = 0
+    sizes = (
+        sample_particle_sizes(rng, n_particles, counts, pop.particle_size_max_um, size_min)
+        if n_particles else []
+    )
     next_id = 0
     for size in sizes:
         aspect = rng.uniform(*pop.particle_aspect_range)

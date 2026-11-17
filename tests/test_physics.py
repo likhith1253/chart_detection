@@ -107,3 +107,13 @@ def test_energy_is_conserved_or_lost_never_created():
     sq = ReferenceSquare((0, 0), 10_000, 60, 0)
     t = object_transmission(cfg, Scene(cfg, sq, bubbles=[Bubble(0, 240.0, 240.0, 100.0, 120.0)]), seed=2)
     assert t.sum() <= t.size + 1e-6
+
+
+def test_sub_4um_tail_keeps_channel_counts():
+    rng = np.random.default_rng(2)
+    counts = (3535.0, 912.0, 113.0)
+    s = sample_particle_sizes(rng, 400_000, counts, 150.0, size_min=2.0)
+    assert s.min() >= 2.0
+    above4 = s[s > 4]
+    assert (above4 > 6).mean() == pytest.approx(912 / 3535, rel=0.03)
+    assert (above4 > 14).mean() == pytest.approx(113 / 3535, rel=0.06)

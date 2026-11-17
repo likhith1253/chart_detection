@@ -59,6 +59,9 @@ class PopulationConfig:
     target_iso_code: str | None = "19/17/14"
     # explicit counts per mL for >4, >6, >14 um; overrides target_iso_code when set
     counts_per_ml: list[float] | None = None
+    # sub-4 um particles exist in real oil; without them measurement scatter only
+    # ever pushes borderline particles below the 4 um threshold, never above it
+    particle_size_min_um: float = 2.0
     particle_size_max_um: float = 150.0
     particle_aspect_range: list[float] = field(default_factory=lambda: [1.0, 2.2])
     particle_roughness: float = 0.18
@@ -119,6 +122,8 @@ class SimConfig:
         if o.rays_per_pixel < 1:
             raise ValueError("rays_per_pixel must be >= 1")
         lo, hi = self.population.bubble_diameter_range_um
+        if not 0 < self.population.particle_size_min_um <= 4.0:
+            raise ValueError("particle_size_min_um must be in (0, 4]")
         if not 0 < lo <= hi < c.film_thickness_um:
             raise ValueError("bubble diameters must be positive and smaller than the film thickness")
         half_extent = c.reference_square_mm * 1000 / 2
