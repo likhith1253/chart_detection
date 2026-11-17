@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+build/
+dist/
+out/
+output/
+runs/
+_scratch/
+_old_chart_detection/
+*.nbi
+*.nbc

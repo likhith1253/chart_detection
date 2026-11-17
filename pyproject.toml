@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fluidsim"
+version = "1.0.0"
+description = "Optical physics image simulator for ISO 4406 particle counting: ray-traced particles and air bubbles in a thin liquid film, with ground truth."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Likhith Ponnada" }]
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "numba>=0.58",
+  "scipy>=1.10",
+  "opencv-python-headless>=4.8",
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "matplotlib>=3.7"]
+
+[project.scripts]
+fluidsim = "fluidsim.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

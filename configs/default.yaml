@@ -1,0 +1,23 @@
+# Full-resolution bench setup: 11.2 x 11.2 mm field at 2 um/px (31 MP mono sensor),
+# 10x / NA 0.25 objective, 200 um oil film, target cleanliness 19/17/14.
+seed: 0
+optics:
+  wavelength_nm: 550
+  objective_na: 0.25
+  condenser_na: 0.12
+  n_liquid: 1.47        # mineral hydraulic oil (ISO VG 46)
+  n_bubble: 1.00
+  rays_per_pixel: 32
+cell:
+  film_thickness_um: 200
+  reference_square_mm: 10
+  square_line_width_um: 60
+image:
+  pixel_size_um: 2.0
+  width_px: 5600
+  height_px: 5600
+  bit_depth: 8
+population:
+  target_iso_code: "19/17/14"
+  bubble_count: 30
+  bubble_diameter_range_um: [12, 160]

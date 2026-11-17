@@ -1,0 +1,7 @@
+# Heavily contaminated, aerated oil: many bubbles that have risen against the cover glass.
+seed: 7
+population:
+  target_iso_code: "21/19/16"
+  bubble_count: 120
+  bubble_diameter_range_um: [8, 180]
+  bubbles_rise_to_top: true

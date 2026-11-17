@@ -1,0 +1,14 @@
+# Flowing film for video / tracking work: 25 fps, 1.5 mm/s centre-line velocity.
+seed: 3
+optics:
+  rays_per_pixel: 12
+image:
+  pixel_size_um: 4.0
+  width_px: 2800
+  height_px: 2800
+sensor:
+  exposure_ms: 2.0
+flow:
+  max_velocity_um_s: 1500
+  direction_deg: 0
+  frame_interval_ms: 40

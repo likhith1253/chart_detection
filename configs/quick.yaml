@@ -1,0 +1,12 @@
+# Fast preview / CI preset: coarser 4 um sampling so an image renders in a few seconds.
+# 4 um particles are sub-pixel here - use default.yaml for the small ISO channels.
+seed: 0
+optics:
+  rays_per_pixel: 12
+image:
+  pixel_size_um: 4.0
+  width_px: 2800
+  height_px: 2800
+population:
+  target_iso_code: "20/18/15"
+  bubble_count: 25
