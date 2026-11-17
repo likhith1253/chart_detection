@@ -122,6 +122,7 @@ Configs are YAML files layered on top of the defaults in `src/fluidsim/config.py
 | `sensor.exposure_ms` | 0.5 | Sets motion-blur length in flow |
 | `population.target_iso_code` | "19/17/14" | Target cleanliness |
 | `population.counts_per_ml` | null | Explicit [> 4, > 6, > 14] counts per mL. Takes precedence over the target code |
+| `population.particle_size_min_um` | 2 | Lower size cut-off (sub-4 µm tail keeps threshold scatter unbiased) |
 | `population.particle_size_max_um` | 150 | Upper size cut-off |
 | `population.particle_aspect_range` | [1.0, 2.2] | Elongation of the particle flakes |
 | `population.particle_transmission_range` | [0.02, 0.18] | Residual transmission of the flakes |
