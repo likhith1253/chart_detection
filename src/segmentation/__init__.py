@@ -1,3 +1,0 @@
-"""
-Chart segmentation package.
-"""
