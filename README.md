@@ -178,12 +178,6 @@ These are deliberate simplifications:
 - Add non-spherical bubbles squeezed by the plates, coalescing bubbles and fibre-shaped particles.
 - Add domain randomisation presets for training learned detectors.
 
-## Project history
-
-This repository previously hosted a chart-detection research project. That code is preserved at tag `archive/chart-detection-v1`. The synthetic-data generation, ground-truth annotation and evaluation experience from that project carried over into this simulator.
-
-The companion **ISO 4406 Vision-Based Particle Counter**, which consumes this ground truth, is at <https://github.com/likhith1253/MT-Dynamics>.
-
 ## Author
 
 Likhith Ponnada. MIT License (see [LICENSE](LICENSE)).
